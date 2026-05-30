@@ -35,9 +35,7 @@ jobs:
           BASE_URL="https://packages.termux.dev/apt/termux-main/pool/main/p/python"
           FNAME=$(curl -s "$BASE_URL/" | grep -oP '(?<=href=")python_[^"]+_aarch64\.deb' | head -n 1)
           wget -nv "$BASE_URL/$FNAME"
-          mkdir python
-          dpkg-deb -x $FNAME python
-          cp -a python/data/data/com.termux/files/usr/lib/libpython* $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/24
+          dpkg-deb -x $FNAME ./
           sed -i 's/"abi3-py38",\? *//g' crates/stream-gears/Cargo.toml
           sed -i '/dependencies = \[/a\    "quickjs >= 1.19.4",' pyproject.toml
           sed -i 's/aiohttp\[speedups\] >= 3\.9\.5/aiohttp[speedups] <= 3.9.5/' pyproject.toml
@@ -47,7 +45,7 @@ jobs:
           export CC_aarch64_linux_android=$NDK_BIN/aarch64-linux-android24-clang
           export AR_aarch64_linux_android=$NDK_BIN/llvm-ar
           export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$NDK_BIN/aarch64-linux-android24-clang
-          export PYO3_CROSS_LIB_DIR=python/data/data/com.termux/files/usr/lib/
+          export PYO3_CROSS_LIB_DIR=data/data/com.termux/files/usr/lib/
           maturin build \
             --release \
             --strip \
@@ -55,7 +53,7 @@ jobs:
             --target aarch64-linux-android \
             --out dist
       - name: Upload wheel to release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: dist/*.whl
         env:
